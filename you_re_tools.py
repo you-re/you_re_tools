@@ -21,6 +21,46 @@ import bpy
 #         maxlen = 255
 #         )
 
+class OBJECT_OT_material_remover(bpy.types.Operator):
+    """Removes materials from all selected objects"""
+    bl_idname = "object.mat_rem"
+    bl_label = "Material Remover"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    separator: bpy.props.StringProperty(
+        name = "Separator",
+        description = "String separator",
+        maxlen = 255
+        )
+    
+    def execute(self, context):
+        view_layer = bpy.context.view_layer
+
+        obj_active = view_layer.objects.active
+        selection = bpy.context.selected_objects
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        for obj in selection:
+
+            obj.select_set(True)
+            
+            view_layer.objects.active = obj
+
+            # Remove all material slots
+            for mat in obj.data.materials:
+                bpy.ops.object.material_slot_remove()
+
+            # Deselect the object
+            obj.select_set(False)
+            
+        view_layer.objects.active = obj_active
+
+        for obj in selection:
+            obj.select_set(True)
+
+        return {"FINISHED"}
+
 class OBJECT_OT_material_assigner(bpy.types.Operator):
     """Takes the name of the object and assigns a material with the same name to it"""
     bl_idname = "object.mat_ass"
@@ -121,15 +161,30 @@ class VIEW3D_PT_material_assigner(bpy.types.Panel):
         # column = self.layout.label(align = True)
         # self.layout.label(text = "Separator string: ")
 
+        # --- material remover ----
+        column = self.layout.column()
+
+        column.operator("object.mat_rem",
+            text = "Remove Materials",
+            icon = "SHADING_RENDERED")
+
+        scene = context.scene
+        
+        column = self.layout.column(align = True)
+        row = column.row(align = True)
+        row.operator("scene.material_remover_properties.separator",
+            text = "String Separator")
 def mesh_add_menu_draw(self, contex):
     pass
 
 def register():
+    bpy.utils.register_class(OBJECT_OT_material_remover)
     bpy.utils.register_class(OBJECT_OT_material_assigner)
     bpy.utils.register_class(VIEW3D_PT_material_assigner)
     bpy.types.VIEW3D_MT_object.append(mesh_add_menu_draw)
     
 def unregister():
+    bpy.utils.unregister_class(OBJECT_OT_material_remover)
     bpy.utils.unregister_class(OBJECT_OT_material_assigner)
     bpy.utils.unregister_class(VIEW3D_PT_material_assigner)
     bpy.types.VIEW3D_MT_object.remove(mesh_add_menu_draw)
