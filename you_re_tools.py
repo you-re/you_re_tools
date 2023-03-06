@@ -21,46 +21,6 @@ import bpy
 #         maxlen = 255
 #         )
 
-class OBJECT_OT_material_remover(bpy.types.Operator):
-    """Removes materials from all selected objects"""
-    bl_idname = "object.mat_rem"
-    bl_label = "Material Remover"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    separator: bpy.props.StringProperty(
-        name = "Separator",
-        description = "String separator",
-        maxlen = 255
-        )
-    
-    def execute(self, context):
-        view_layer = bpy.context.view_layer
-
-        obj_active = view_layer.objects.active
-        selection = bpy.context.selected_objects
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        for obj in selection:
-
-            obj.select_set(True)
-            
-            view_layer.objects.active = obj
-
-            # Remove all material slots
-            for mat in obj.data.materials:
-                bpy.ops.object.material_slot_remove()
-
-            # Deselect the object
-            obj.select_set(False)
-            
-        view_layer.objects.active = obj_active
-
-        for obj in selection:
-            obj.select_set(True)
-
-        return {"FINISHED"}
-
 class OBJECT_OT_material_assigner(bpy.types.Operator):
     """Takes the name of the object and assigns a material with the same name to it"""
     bl_idname = "object.mat_ass"
@@ -130,7 +90,77 @@ class OBJECT_OT_material_assigner(bpy.types.Operator):
 
         # ----------- Function end -----------
 
-        return {"FINISHED"}
+        return {"Materials Assigned!"}
+
+class OBJECT_OT_material_remover(bpy.types.Operator):
+    """Removes materials from all selected objects"""
+    bl_idname = "object.mat_rem"
+    bl_label = "Material Remover"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        view_layer = bpy.context.view_layer
+
+        obj_active = view_layer.objects.active
+        selection = bpy.context.selected_objects
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        for obj in selection:
+
+            obj.select_set(True)
+            
+            view_layer.objects.active = obj
+
+            # Remove all material slots
+            for mat in obj.data.materials:
+                bpy.ops.object.material_slot_remove()
+
+            # Deselect the object
+            obj.select_set(False)
+            
+        view_layer.objects.active = obj_active
+
+        for obj in selection:
+            obj.select_set(True)
+
+        return {"Materials removed!"}
+    
+class OBJECT_OT_uv_remover(bpy.types.Operator):
+    """Removes UV-maps from all selected objects"""
+    bl_idname = "object.uv_rem"
+    bl_label = "UV Remover"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        view_layer = bpy.context.view_layer
+
+        obj_active = view_layer.objects.active
+        selection = bpy.context.selected_objects
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        for obj in selection:
+
+            obj.select_set(True)
+            
+            view_layer.objects.active = obj
+            
+            if (bpy.context.object.data.uv_layers == False):
+                
+                bpy.ops.mesh.uv_texture_remove()
+            
+            obj.select_set(False)
+            
+            # uv_name = "UVMap"
+            # bpy.ops.mesh.uv_texture_add()
+
+        view_layer.objects.active = obj_active
+
+        for obj in selection:
+            obj.select_set(True)
+
+        return {"UVs Removed!"}
 
 class VIEW3D_PT_material_assigner(bpy.types.Panel):
     bl_label = "Youre Tools"
@@ -148,10 +178,12 @@ class VIEW3D_PT_material_assigner(bpy.types.Panel):
 
         scene = context.scene
         
-        column = self.layout.column(align = True)
-        row = column.row(align = True)
-        row.operator("scene.material_assigner_properties.separator",
-            text = "String Separator")
+        # ------ need to implement separation by user defined string -----
+        # column = self.layout.column(align = True)
+        # row = column.row(align = True)
+        # row.operator("scene.material_assigner_properties.separator",
+        #     text = "String Separator")
+        
         # row.prop(context.scene.material_assigner_properties, "separator", text = ".")        
 
         # layout = self.layout
@@ -166,25 +198,29 @@ class VIEW3D_PT_material_assigner(bpy.types.Panel):
 
         column.operator("object.mat_rem",
             text = "Remove Materials",
-            icon = "SHADING_RENDERED")
+            icon = "NODE_MATERIAL")
 
         scene = context.scene
         
-        column = self.layout.column(align = True)
-        row = column.row(align = True)
-        row.operator("scene.material_remover_properties.separator",
-            text = "String Separator")
+        column = self.layout.column()
+
+        column.operator("object.uv_rem",
+            text = "Remove UVs",
+            icon = "MOD_UVPROJECT")
+        
 def mesh_add_menu_draw(self, contex):
     pass
 
 def register():
-    bpy.utils.register_class(OBJECT_OT_material_remover)
     bpy.utils.register_class(OBJECT_OT_material_assigner)
+    bpy.utils.register_class(OBJECT_OT_material_remover)
+    bpy.utils.register_class(OBJECT_OT_uv_remover)
     bpy.utils.register_class(VIEW3D_PT_material_assigner)
     bpy.types.VIEW3D_MT_object.append(mesh_add_menu_draw)
     
 def unregister():
-    bpy.utils.unregister_class(OBJECT_OT_material_remover)
     bpy.utils.unregister_class(OBJECT_OT_material_assigner)
+    bpy.utils.unregister_class(OBJECT_OT_material_remover)
+    bpy.utils.unregister_class(OBJECT_OT_uv_remover)
     bpy.utils.unregister_class(VIEW3D_PT_material_assigner)
     bpy.types.VIEW3D_MT_object.remove(mesh_add_menu_draw)
