@@ -24,4 +24,10 @@ def moveMarkers(time_multiplier, move_selected):
     else:
         print("No timeline markers found")
 
+# First argument is the time multiplier e.g.:
+# original marker frame number is 100, multiplier is 1.1
+# -> marker will be moved to frame 100 * 1.1 = F110
+# Second argument is bool:
+# False to move all the scene's markers
+# True to move only selected markers 
 moveMarkers(1.1, False)
